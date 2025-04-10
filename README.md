@@ -98,7 +98,6 @@ Processing Errors: Check that the CSV structure matches the expected format
 Authorization Errors: Verify that the bearer token is valid and has not expired
 API Connection Errors: Confirm that the API endpoints are correctly configured
 
-License
-[Specify your license here]
+
 Contact
 For questions or support, please contact me.
