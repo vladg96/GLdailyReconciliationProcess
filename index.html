@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Report Builder</title>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --success-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --error-color: #e63946;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .upload-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-container {
+            border: 2px dashed var(--accent-color);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 1.5rem 0;
+        }
+
+        .upload-container:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .selected-file {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .report-section {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-content {
+            margin-top: 1.5rem;
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 5px;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: var(--error-color);
+            background-color: rgba(230, 57, 70, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .success-message {
+            color: #2b9348;
+            background-color: rgba(43, 147, 72, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        .feature-section {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin: 3rem 0;
+        }
+
+        .feature-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            flex-basis: calc(33% - 1rem);
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ccc;
+        }
+
+        .status-dot.running {
+            background-color: #ffd166;
+        }
+
+        .status-dot.completed {
+            background-color: #06d6a0;
+        }
+
+        .status-dot.failed {
+            background-color: #ef476f;
+        }
+
+        @media (max-width: 768px) {
+            .feature-card {
+                flex-basis: 100%;
+            }
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem 0;
+            color: #666;
+        }
+
+        .report-content p {
+            margin-bottom: 10px;
+        }
+
+        .report-content ul {
+            margin-left: 20px;
+        }
+        
+        .debug-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Report Builder</h1>
+            <p class="subtitle">Upload your CSV data and our AI will generate comprehensive reports automatically.</p>
+        </header>
+
+        <div class="main-content">
+            <section class="upload-section">
+                <h2>Upload CSV File</h2>
+                <div class="upload-container" id="upload-container">
+                    <div class="upload-icon">📁</div>
+                    <p class="upload-text">Drag & drop your CSV file here or click to browse</p>
+                    <input type="file" id="fileInput" class="file-input" accept=".csv">
+                    <button class="btn" id="browse-btn">Choose File</button>
+                    <p class="selected-file" id="selected-file">No file selected</p>
+                </div>
+                <div class="error-message" id="error-message"></div>
+                <div class="success-message" id="success-message"></div>
+                <div class="btn-container">
+                    <button class="btn" id="generate-btn" disabled>Generate Report</button>
+                </div>
+            </section>
+
+            <div class="loader" id="loader">
+                <div class="spinner"></div>
+                <p id="loader-text">Processing your data...</p>
+                <div class="status-indicator" id="status-indicator" style="display: none;">
+                    <div class="status-dot" id="status-dot"></div>
+                    <span id="status-text">Initializing...</span>
+                </div>
+            </div>
+
+            <section class="report-section" id="report-section">
+                <h2>Generated Report</h2>
+                <div class="report-content" id="report-content">
+                    <p>Your report will appear here after processing.</p>
+                </div>
+                <div class="btn-container">
+                    <button class="btn" id="download-btn" style="display: none;">Download Report</button>
+                </div>
+            </section>
+        </div>
+
+        <section class="feature-section">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI-Powered Analysis</h3>
+                <p>Our advanced AI analyzes your data and creates insightful reports customized to your needs.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Fast Processing</h3>
+                <p>Get your comprehensive reports in seconds, no matter how complex your data is.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Data Visualization</h3>
+                <p>Automatically transform your raw data into clear, actionable insights with visual elements.</p>
+            </div>
+        </section>
+
+        <footer>
+            <p>&copy; 2025 AI Report Builder. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadContainer = document.getElementById('upload-container');
+            const fileInput = document.getElementById('fileInput');
+            const selectedFileText = document.getElementById('selected-file');
+            const generateBtn = document.getElementById('generate-btn');
+            const browseBtn = document.getElementById('browse-btn');
+            const reportContent = document.getElementById('report-content');
+            const loader = document.getElementById('loader');
+            const loaderText = document.getElementById('loader-text');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const downloadBtn = document.getElementById('download-btn');
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+
+            // API endpoints
+            const executeEndpoint = 'https://cloud.integrail.ai/api/Q4gmrB8jCfx5MD7Ny/agent/aeNtyiHQtfsBiCvXX/execute';
+            const statusEndpointTemplate = 'https://cloud.integrail.ai/api/Q4gmrB8jCfx5MD7Ny/agent/{{executionId}}/status';
+            
+            // Bearer token for authorization
+            const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJRNGdtckI4akNmeDVNRDdOeSIsImlhdCI6MTc0NDI4MDI5OX0.8yXW_ACn6xE6KCyMFG3vMtzwEItEF84coflaG3Dj-74';
+
+            let currentExecutionId = null;
+            let statusCheckInterval = null;
+
+            // Open file browser when clicking on the upload container or browse button
+            uploadContainer.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            browseBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fileInput.click();
+            });
+
+            // Handle file selection
+            fileInput.addEventListener('change', function() {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+                        selectedFileText.textContent = `Selected: ${file.name}`;
+                        generateBtn.disabled = false;
+                        errorMessage.style.display = 'none';
+                        debugLog('File selected', file.name);
+                    } else {
+                        selectedFileText.textContent = 'No file selected';
+                        generateBtn.disabled = true;
+                        showError('Please select a valid CSV file.');
+                        debugLog('Invalid file type', file.type);
+                    }
+                }
+            });
+
+            // Handle drag and drop functionality
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadContainer.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight() {
+                uploadContainer.style.backgroundColor = 'rgba(67, 97, 238, 0.1)';
+                uploadContainer.style.borderColor = 'var(--primary-color)';
+            }
+
+            function unhighlight() {
+                uploadContainer.style.backgroundColor = '';
+                uploadContainer.style.borderColor = 'var(--accent-color)';
+            }
+
+            uploadContainer.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                
+                if (file && (file.type === 'text/csv' || file.name.endsWith('.csv'))) {
+                    fileInput.files = dt.files;
+                    selectedFileText.textContent = `Selected: ${file.name}`;
+                    generateBtn.disabled = false;
+                    errorMessage.style.display = 'none';
+                    debugLog('File dropped', file.name);
+                } else {
+                    selectedFileText.textContent = 'No file selected';
+                    generateBtn.disabled = true;
+                    showError('Please select a valid CSV file.');
+                    debugLog('Invalid file dropped', file ? file.type : 'no file');
+                }
+            }
+
+            // Function to show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                console.error(message);
+            }
+
+            // Function to show success message
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+                console.log(message);
+            }
+
+            // Function to update status indicator
+            function updateStatus(message) {
+                loaderText.textContent = message;
+                statusIndicator.style.display = 'flex';
+                statusText.textContent = message;
+                console.log('Status update:', message);
+
+                if (message.toLowerCase().includes('processing') || 
+                    message.toLowerCase().includes('starting')) {
+                    statusDot.className = 'status-dot running';
+                } else if (message.toLowerCase().includes('completed') || 
+                          message.toLowerCase().includes('success') ||
+                          message.toLowerCase().includes('finished')) {
+                    statusDot.className = 'status-dot completed';
+                } else if (message.toLowerCase().includes('failed') || 
+                          message.toLowerCase().includes('error')) {
+                    statusDot.className = 'status-dot failed';
+                } else {
+                    statusDot.className = 'status-dot';
+                }
+            }
+
+            // Generate report when clicking the generate button
+            generateBtn.addEventListener('click', function() {
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    
+                    // Show loader and hide report content
+                    loader.style.display = 'block';
+                    statusIndicator.style.display = 'flex';
+                    updateStatus('Processing file...');
+                    reportContent.innerHTML = '<p>Processing your data...</p>';
+                    downloadBtn.style.display = 'none';
+                    errorMessage.style.display = 'none';
+                    successMessage.style.display = 'none';
+                    generateBtn.disabled = true;
+                    
+                    // Using hardcoded URL from your example as a fallback
+                    const fileUrl = "https://storage-service.integrail.ai/api/download/Q4gmrB8jCfx5MD7Ny%2F01b0601f-c718-43c8-909c-3502da9d47b7.csv?secret=257f8d8c-e23a-4795-a646-43eabaabb04e";
+                    
+                    // Create JSON payload with file URL
+                    const payload = {
+                        inputs: {
+                            "file-1": {
+                                url: fileUrl,
+                                fileName: "EIM_RB16007-smallCentral GLs report for daily GL checking (1).csv"
+                            }
+                        }
+                    };
+                    
+                    // Call the agent API with the URL payload
+                    fetch(executeEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${bearerToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Agent execution failed: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Execute API response:', data);
+                        
+                        if (data.executionId) {
+                            currentExecutionId = data.executionId;
+                            updateStatus('Processing started');
+                            checkExecutionStatus();
+                        } else {
+                            throw new Error('No execution ID received from API');
+                        }
+                    })
+                    .catch(error => {
+                        loader.style.display = 'none';
+                        showError(`Error: ${error.message}`);
+                        console.error('Error:', error);
+                        generateBtn.disabled = false;
+                    });
+                }
+            });
+            
+            // Function to upload file to storage service
+            function uploadFile(file) {
+                return new Promise((resolve, reject) => {
+                    debugLog('Starting file upload');
+                    
+                    const uploadData = new FormData();
+                    uploadData.append('file', file);
+                    
+                    fetch(uploadEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${bearerToken}`
+                        },
+                        body: uploadData
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            debugLog('Upload response not OK', `${response.status} ${response.statusText}`);
+                            throw new Error(`File upload failed: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        debugLog('Upload response data', data);
+                        
+                        if (data && data.url) {
+                            resolve(data.url);
+                        } else {
+                            throw new Error('Upload service did not return a file URL');
+                        }
+                    })
+                    .catch(error => {
+                        debugLog('Upload error', error.message);
+                        reject(error);
+                    });
+                });
+            }
+            
+            // Function to execute the agent with the file URL
+            function executeAgent(fileUrl, fileName) {
+                return new Promise((resolve, reject) => {
+                    debugLog('Starting agent execution', {fileUrl, fileName});
+                    
+                    // Prepare the payload for the agent
+                    const payload = {
+                        inputs: {
+                            "file-1": {
+                                url: fileUrl,
+                                fileName: fileName
+                            }
+                        }
+                    };
+                    
+                    debugLog('Execute payload', payload);
+                    
+                    // Call the execute endpoint
+                    fetch(executeEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${bearerToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            debugLog('Execute response not OK', `${response.status} ${response.statusText}`);
+                            throw new Error(`Agent execution failed: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        debugLog('Execute response data', data);
+                        
+                        if (data && data.executionId) {
+                            resolve(data.executionId);
+                        } else {
+                            throw new Error('No execution ID returned from agent');
+                        }
+                    })
+                    .catch(error => {
+                        debugLog('Execute error', error.message);
+                        reject(error);
+                    });
+                });
+            }
+
+            // Function to check execution status
+            function checkExecutionStatus() {
+                if (!currentExecutionId) {
+                    clearInterval(statusCheckInterval);
+                    showError('No execution ID available');
+                    loader.style.display = 'none';
+                    generateBtn.disabled = false;
+                    return;
+                }
+
+                const statusEndpoint = statusEndpointTemplate.replace('{{executionId}}', currentExecutionId);
+                
+                if (statusCheckInterval) {
+                    clearInterval(statusCheckInterval);
+                }
+
+                statusCheckInterval = setInterval(() => {
+                    fetch(statusEndpoint, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${bearerToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Status check failed: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Status API response:', data);
+                        
+                        // Check if execution is finished
+                        if (data.execution && data.execution.status === 'finished') {
+                            clearInterval(statusCheckInterval);
+                            loader.style.display = 'none';
+                            displayReport(data);
+                            showSuccess('Report generated successfully!');
+                            downloadBtn.style.display = 'inline-block';
+                            generateBtn.disabled = false;
+                        }
+                        // Check if execution failed
+                        else if (data.execution && (data.execution.status === 'failed' || data.execution.status === 'error')) {
+                            clearInterval(statusCheckInterval);
+                            loader.style.display = 'none';
+                            showError('Report generation failed: ' + (data.execution.message || 'Unknown error'));
+                            generateBtn.disabled = false;
+                        }
+                        // Otherwise update the status
+                        else if (data.execution && data.execution.status) {
+                            updateStatus('Status: ' + data.execution.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking status:', error);
+                    });
+                }, 2000); // Check every 2 seconds
+            }
+
+            // Function to display the report
+            function displayReport(data) {
+                // Clear previous content
+                reportContent.innerHTML = '';
+                
+                // Extract the report content from the response
+                let reportText = '';
+                
+                if (data.execution && data.execution.outputs && data.execution.outputs['14-output']) {
+                    reportText = data.execution.outputs['14-output'];
+                } else if (data.outputs && data.outputs['14-output']) {
+                    reportText = data.outputs['14-output'];
+                } else if (typeof data === 'string') {
+                    reportText = data;
+                }
+                
+                if (reportText) {
+                    // Format the report text to HTML
+                    reportText = reportText.replace(/\*\*/g, ''); // Remove asterisks
+                    reportText = reportText.replace(/\n\n/g, '</p><p>');
+                    reportText = reportText.replace(/\n(\d+)\./g, '</p><p><strong>$1.</strong>');
+                    reportText = reportText.replace(/\n   -/g, '<br>•');
+                    
+                    // Display the formatted report
+                    reportContent.innerHTML = `<p>${reportText}</p>`;
+                } else {
+                    // Show the raw data if no report content found
+                    reportContent.innerHTML = `
+                        <p><strong>Raw API Response:</strong></p>
+                        <pre style="overflow-x: auto; white-space: pre-wrap;">${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            }
+
+            // Download button functionality
+            downloadBtn.addEventListener('click', function() {
+                debugLog('Download button clicked');
+                const reportText = reportContent.innerText || reportContent.textContent;
+                const blob = new Blob([reportText], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'cash-management-report.txt';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                debugLog('Report downloaded');
+            });
+        });
+    </script>
+</body>
+</html>
