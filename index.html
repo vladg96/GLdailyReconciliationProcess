@@ -342,12 +342,12 @@
             const statusDot = document.getElementById('status-dot');
             const statusText = document.getElementById('status-text');
 
-            // API endpoints
-            const executeEndpoint = 'https://cloud.integrail.ai/api/Q4gmrB8jCfx5MD7Ny/agent/aeNtyiHQtfsBiCvXX/execute';
-            const statusEndpointTemplate = 'https://cloud.integrail.ai/api/Q4gmrB8jCfx5MD7Ny/agent/{{executionId}}/status';
+            // API endpoints - Updated with staging endpoints
+            const executeEndpoint = 'https://staging-cloud.integrail.ai/api/XZmz98oRtXmWdRJfx/agent/B9vaavrr3PmRRAfRd/execute';
+            const statusEndpointTemplate = 'https://staging-cloud.integrail.ai/api/XZmz98oRtXmWdRJfx/agent/{{executionId}}/status';
             
-            // Bearer token for authorization
-            const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJRNGdtckI4akNmeDVNRDdOeSIsImlhdCI6MTc0NDI4MTc4NX0.BaSDIJriHnps5gcxwFqsKxffBJKzDRiNJdUjXRPg6SI';
+            // Bearer token for authorization - Updated staging token
+            const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJYWm16OThvUnRYbVdkUkpmeCIsImlhdCI6MTc0NDM2MzI0Mn0.ja-I72-6mbnhBFnozk7gtzR-niQoicCLctofhg0IQNU';
 
             let currentExecutionId = null;
             let statusCheckInterval = null;
@@ -481,10 +481,10 @@
                     successMessage.style.display = 'none';
                     generateBtn.disabled = true;
                     
-                    // Using hardcoded URL from your example as a fallback
-                    const fileUrl = "https://storage-service.integrail.ai/api/download/Q4gmrB8jCfx5MD7Ny%2F01b0601f-c718-43c8-909c-3502da9d47b7.csv?secret=257f8d8c-e23a-4795-a646-43eabaabb04e";
+                    // Use the provided file URL from the curl example
+                    const fileUrl = "https://storage-service.integrail.ai/api/download/Q4gmrB8jCfx5MD7Ny%2F2c1a5107-7286-46e9-8f2a-6d0cf0100086.csv?secret=f99f6f8a-1bf3-4609-8d62-c7e874b47dd3";
                     
-                    // Create JSON payload with file URL
+                    // Create JSON payload with file URL exactly as in the curl example
                     const payload = {
                         inputs: {
                             "file-1": {
@@ -493,6 +493,8 @@
                             }
                         }
                     };
+                    
+                    console.log('Request payload:', payload);
                     
                     // Call the agent API with the URL payload
                     fetch(executeEndpoint, {
@@ -504,9 +506,15 @@
                         body: JSON.stringify(payload)
                     })
                     .then(response => {
+                        console.log('Response status:', response.status);
+                        
                         if (!response.ok) {
-                            throw new Error(`Agent execution failed: ${response.status} ${response.statusText}`);
+                            return response.text().then(text => {
+                                console.error('Error response body:', text);
+                                throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+                            });
                         }
+                        
                         return response.json();
                     })
                     .then(data => {
@@ -514,7 +522,7 @@
                         
                         if (data.executionId) {
                             currentExecutionId = data.executionId;
-                            updateStatus('Processing started');
+                            updateStatus('Processing started - ID: ' + currentExecutionId);
                             checkExecutionStatus();
                         } else {
                             throw new Error('No execution ID received from API');
