@@ -634,7 +634,7 @@
                     return;
                 }
 
-                const statusEndpoint = statusEndpointTemplate.replace('{execution-id}', currentExecutionId);
+                const statusEndpoint = statusEndpointTemplate.replace('{{execution-id}}', currentExecutionId);
                 
                 if (statusCheckInterval) {
                     clearInterval(statusCheckInterval);
