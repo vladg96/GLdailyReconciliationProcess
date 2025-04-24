@@ -45,7 +45,7 @@
             margin-bottom: 1rem;
         }
 
-        .sub {
+        .subtitle {
             font-size: 1.2rem;
             color: #666;
             max-width: 800px;
@@ -252,10 +252,6 @@
         .report-content ul {
             margin-left: 20px;
         }
-        
-        .debug-info {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -342,11 +338,14 @@
             const statusDot = document.getElementById('status-dot');
             const statusText = document.getElementById('status-text');
 
-            // API endpoints - Updated with staging endpoints
+            // API endpoints with correct format
             const executeEndpoint = 'https://beta-cloud.integrail.ai/api/Q4gmrB8jCfx5MD7Ny/agent/fv6L3eWwPrL97MxBg/execute';
-            const statusEndpointTemplate = 'https://beta-cloud.integrail.ai/api/Q4gmrB8jCfx5MD7Ny/agent/{execution-id}/status';
+            // Using a function to build the status URL to avoid template string issues
+            function getStatusEndpoint(executionId) {
+                return `https://beta-cloud.integrail.ai/api/Q4gmrB8jCfx5MD7Ny/agent/${executionId}/status`;
+            }
             
-            // Bearer token for authorization - Updated staging token
+            // Bearer token for authorization
             const bearerToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50SWQiOiJRNGdtckI4akNmeDVNRDdOeSIsImlhdCI6MTc0NDI4MjkzNn0.wTcnJf1Kxvbn1hkDlX1cl3dqvjb-8nL-8QTPSBdEoWM';
 
             let currentExecutionId = null;
@@ -370,12 +369,12 @@
                         selectedFileText.textContent = `Selected: ${file.name}`;
                         generateBtn.disabled = false;
                         errorMessage.style.display = 'none';
-                        debugLog('File selected', file.name);
+                        console.log('File selected:', file.name);
                     } else {
                         selectedFileText.textContent = 'No file selected';
                         generateBtn.disabled = true;
                         showError('Please select a valid CSV file.');
-                        debugLog('Invalid file type', file.type);
+                        console.log('Invalid file type:', file.type);
                     }
                 }
             });
@@ -419,12 +418,12 @@
                     selectedFileText.textContent = `Selected: ${file.name}`;
                     generateBtn.disabled = false;
                     errorMessage.style.display = 'none';
-                    debugLog('File dropped', file.name);
+                    console.log('File dropped:', file.name);
                 } else {
                     selectedFileText.textContent = 'No file selected';
                     generateBtn.disabled = true;
                     showError('Please select a valid CSV file.');
-                    debugLog('Invalid file dropped', file ? file.type : 'no file');
+                    console.log('Invalid file dropped:', file ? file.type : 'no file');
                 }
             }
 
@@ -487,7 +486,7 @@
                     // Create JSON payload with file URL exactly as in the curl example
                     const payload = {
                         inputs: {
-                            "file-1": {
+                            "file": {
                                 url: fileUrl,
                                 fileName: "EIM_RB16007-smallCentral GLs report for daily GL checking (1).csv"
                             }
@@ -536,93 +535,6 @@
                     });
                 }
             });
-            
-            // Function to upload file to storage service
-            function uploadFile(file) {
-                return new Promise((resolve, reject) => {
-                    debugLog('Starting file upload');
-                    
-                    const uploadData = new FormData();
-                    uploadData.append('file', file);
-                    
-                    fetch(uploadEndpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${bearerToken}`
-                        },
-                        body: uploadData
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            debugLog('Upload response not OK', `${response.status} ${response.statusText}`);
-                            throw new Error(`File upload failed: ${response.status} ${response.statusText}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        debugLog('Upload response data', data);
-                        
-                        if (data && data.url) {
-                            resolve(data.url);
-                        } else {
-                            throw new Error('Upload service did not return a file URL');
-                        }
-                    })
-                    .catch(error => {
-                        debugLog('Upload error', error.message);
-                        reject(error);
-                    });
-                });
-            }
-            
-            // Function to execute the agent with the file URL
-            function executeAgent(fileUrl, fileName) {
-                return new Promise((resolve, reject) => {
-                    debugLog('Starting agent execution', {fileUrl, fileName});
-                    
-                    // Prepare the payload for the agent
-                    const payload = {
-                        inputs: {
-                            "file-1": {
-                                url: fileUrl,
-                                fileName: fileName
-                            }
-                        }
-                    };
-                    
-                    debugLog('Execute payload', payload);
-                    
-                    // Call the execute endpoint
-                    fetch(executeEndpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${bearerToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            debugLog('Execute response not OK', `${response.status} ${response.statusText}`);
-                            throw new Error(`Agent execution failed: ${response.status} ${response.statusText}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        debugLog('Execute response data', data);
-                        
-                        if (data && data.executionId) {
-                            resolve(data.executionId);
-                        } else {
-                            throw new Error('No execution ID returned from agent');
-                        }
-                    })
-                    .catch(error => {
-                        debugLog('Execute error', error.message);
-                        reject(error);
-                    });
-                });
-            }
 
             // Function to check execution status
             function checkExecutionStatus() {
@@ -634,7 +546,9 @@
                     return;
                 }
 
-                const statusEndpoint = statusEndpointTemplate.replace('{{execution-id}}', currentExecutionId);
+                // Use the function to get the correct status URL
+                const statusEndpoint = getStatusEndpoint(currentExecutionId);
+                console.log('Checking status at:', statusEndpoint);
                 
                 if (statusCheckInterval) {
                     clearInterval(statusCheckInterval);
@@ -720,7 +634,7 @@
 
             // Download button functionality
             downloadBtn.addEventListener('click', function() {
-                debugLog('Download button clicked');
+                console.log('Download button clicked');
                 const reportText = reportContent.innerText || reportContent.textContent;
                 const blob = new Blob([reportText], { type: 'text/plain' });
                 const url = window.URL.createObjectURL(blob);
@@ -732,7 +646,7 @@
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
-                debugLog('Report downloaded');
+                console.log('Report downloaded');
             });
         });
     </script>
